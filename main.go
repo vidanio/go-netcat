@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"time"
 )
 
 // Handles TC connection and perform synchorinization:
@@ -26,7 +27,7 @@ func tcp_con_handle(con net.Conn) {
 
 // Performs copy operation between streams: os and tcp streams
 func stream_copy(src io.Reader, dst io.Writer) <-chan int {
-	buf := make([]byte, 1024)
+	buf := make([]byte, 1316)
 	sync_channel := make(chan int)
 	go func() {
 		defer func() {
@@ -36,6 +37,9 @@ func stream_copy(src io.Reader, dst io.Writer) <-chan int {
 			}
 			sync_channel <- 0 // Notify that processing is finished
 		}()
+		start := time.Now()   // tiempo total
+		partial := time.Now() // tiempo parcial
+		totalBytes := 0
 		for {
 			var nBytes int
 			var err error
@@ -49,6 +53,13 @@ func stream_copy(src io.Reader, dst io.Writer) <-chan int {
 			_, err = dst.Write(buf[0:nBytes])
 			if err != nil {
 				log.Fatalf("Write error: %s\n", err)
+			}
+			totalBytes = totalBytes + nBytes
+			if time.Since(partial).Nanoseconds() > int64(500000000) { // half a second
+				log.Printf("time=%.2f bitrate=%dkbits/s\n", time.Since(start).Seconds(), 16*totalBytes)
+				// reiniciamos todos los contadores
+				totalBytes = 0
+				partial = time.Now()
 			}
 		}
 	}()
