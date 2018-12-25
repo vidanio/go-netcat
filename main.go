@@ -27,7 +27,7 @@ func tcp_con_handle(con net.Conn) {
 
 // Performs copy operation between streams: os and tcp streams
 func stream_copy(src io.Reader, dst io.Writer) <-chan int {
-	buf := make([]byte, 1316)
+	buf := make([]byte, 3948)
 	sync_channel := make(chan int)
 	go func() {
 		defer func() {
@@ -40,6 +40,7 @@ func stream_copy(src io.Reader, dst io.Writer) <-chan int {
 		start := time.Now()   // tiempo total
 		partial := time.Now() // tiempo parcial
 		totalBytes := 0
+		oldbitrate := float64(0)
 		for {
 			var nBytes int
 			var err error
@@ -55,9 +56,16 @@ func stream_copy(src io.Reader, dst io.Writer) <-chan int {
 				log.Fatalf("Write error: %s\n", err)
 			}
 			totalBytes = totalBytes + nBytes
-			if time.Since(partial).Nanoseconds() > 500000000 { // half a second
-				log.Printf("time=%.2f bitrate=%dkbits/s\n", time.Since(start).Seconds(), 16*totalBytes/1000)
+			t := time.Since(partial).Nanoseconds()
+			if t > 500000000 { // half a second
+				bitrate := float64(totalBytes * 8000000.0 / int(t))
+				if oldbitrate == 0 {
+					oldbitrate = bitrate
+				}
+				c := 0.9*oldbitrate + 0.1*bitrate
+				fmt.Fprintf(os.Stderr, "time=%.2f bitrate=%.0fkbits/s\n", time.Since(start).Seconds(), c)
 				// reiniciamos todos los contadores
+				oldbitrate = c
 				totalBytes = 0
 				partial = time.Now()
 			}
