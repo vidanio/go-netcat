@@ -55,8 +55,8 @@ func stream_copy(src io.Reader, dst io.Writer) <-chan int {
 				log.Fatalf("Write error: %s\n", err)
 			}
 			totalBytes = totalBytes + nBytes
-			if time.Since(partial).Nanoseconds() > int64(500000000) { // half a second
-				log.Printf("time=%.2f bitrate=%dkbits/s\n", time.Since(start).Seconds(), 16*totalBytes)
+			if time.Since(partial).Nanoseconds() > 500000000 { // half a second
+				log.Printf("time=%.2f bitrate=%dkbits/s\n", time.Since(start).Seconds(), 16*totalBytes/1000)
 				// reiniciamos todos los contadores
 				totalBytes = 0
 				partial = time.Now()
@@ -161,10 +161,10 @@ func main() {
 	}
 	log.Println("Source port:", sourcePort)
 	if flag.Lookup("u") != nil {
+		log.Println("Protocol:", "tcp")
+	} else {
 		log.Println("Protocol:", "udp")
 		isUdp = true
-	} else {
-		log.Println("Protocol:", "tcp")
 	}
 	if sourcePort != "" {
 		if _, err := strconv.Atoi(sourcePort); err != nil {
