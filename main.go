@@ -62,7 +62,7 @@ func stream_copy(src io.Reader, dst io.Writer) <-chan int {
 				if oldbitrate == 0 {
 					oldbitrate = bitrate
 				}
-				c := 0.9*oldbitrate + 0.1*bitrate
+				c := 0.99*oldbitrate + 0.01*bitrate
 				fmt.Fprintf(os.Stderr, "time=%.2f bitrate=%.0fkbits/s\n", time.Since(start).Seconds(), c)
 				// reiniciamos todos los contadores
 				oldbitrate = c
@@ -158,16 +158,19 @@ func main() {
 	var isUdp bool
 	var isListen bool
 	var host string
+	var ident string
+	flag.StringVar(&ident, "i", "", "Identifier for the execution procedure.")
 	flag.StringVar(&sourcePort, "p", "", "Specifies the source port netcat should use, subject to privilege restrictions and availability.")
 	flag.BoolVar(&isUdp, "u", false, "Use UDP instead of the default option of TCP.")
 	flag.BoolVar(&isListen, "l", false, "Used to specify that netcat should listen for an incoming connection rather than initiate a connection to a remote host.")
 	flag.Parse()
 	if flag.NFlag() == 0 && flag.NArg() == 0 {
-		fmt.Println("go-nc [-lu] [-p source port ] [-s source ip address ] [hostname ] [port[s]]")
+		fmt.Println("go-nc [-lu] [-p source port ] [-s source ip address ] [-i ident] [hostname ] [port[s]]")
 		flag.Usage()
 		os.Exit(1)
 	}
 	log.Println("Source port:", sourcePort)
+	log.Println("Ident:", ident)
 	if flag.Lookup("u") != nil {
 		log.Println("Protocol:", "tcp")
 	} else {
