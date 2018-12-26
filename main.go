@@ -1,4 +1,4 @@
-// go-nc project main.go
+// gonc project main.go
 package main
 
 import (
@@ -165,7 +165,7 @@ func main() {
 	flag.BoolVar(&isListen, "l", false, "Used to specify that netcat should listen for an incoming connection rather than initiate a connection to a remote host.")
 	flag.Parse()
 	if flag.NFlag() == 0 && flag.NArg() == 0 {
-		fmt.Println("go-nc [-lu] [-p source port ] [-s source ip address ] [-i ident] [hostname ] [port[s]]")
+		fmt.Println("gonc [-lu] [-p source port ] [-s source ip address ] [-i ident] [hostname ] [port[s]]")
 		flag.Usage()
 		os.Exit(1)
 	}
