@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -41,6 +42,8 @@ func stream_copy(src io.Reader, dst io.Writer) <-chan int {
 		partial := time.Now() // tiempo parcial
 		totalBytes := 0
 		oldbitrate := float64(0)
+		started := true
+		pos := 0
 		for {
 			var nBytes int
 			var err error
@@ -51,9 +54,21 @@ func stream_copy(src io.Reader, dst io.Writer) <-chan int {
 				}
 				break
 			}
-			_, err = dst.Write(buf[0:nBytes])
-			if err != nil {
-				log.Fatalf("Write error: %s\n", err)
+			if started { // sync with MPEG-2 TS start = 0x47
+				pos = bytes.IndexByte(buf, 0x47)
+				if pos < 0 || pos >= nBytes { // sync not found in this read
+					continue
+				}
+				_, err = dst.Write(buf[pos:nBytes])
+				if err != nil {
+					log.Fatalf("Write error: %s\n", err)
+				}
+				started = false
+			} else {
+				_, err = dst.Write(buf[0:nBytes])
+				if err != nil {
+					log.Fatalf("Write error: %s\n", err)
+				}
 			}
 			totalBytes = totalBytes + nBytes
 			t := time.Since(partial).Nanoseconds()
