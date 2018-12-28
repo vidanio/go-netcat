@@ -56,7 +56,13 @@ func stream_copy(src io.Reader, dst io.Writer) <-chan int {
 			}
 			if started { // sync with MPEG-2 TS start = 0x47
 				pos = bytes.IndexByte(buf, 0x47)
-				if pos < 0 || pos >= nBytes { // sync not found in this read
+				if (pos < 0) || (pos >= nBytes) { // sync not found in this read
+					continue
+				}
+				if (pos + 188) >= nBytes {
+					continue
+				}
+				if buf[pos+188] != 0x47 {
 					continue
 				}
 				_, err = dst.Write(buf[pos:nBytes])
